@@ -58,8 +58,7 @@ public class WallpaperChooserDialogFragment extends DialogFragment implements
 	private Bitmap mBitmap = null;
 
 	private ArrayList<String> mImagesPath;
-	private ArrayList<Bitmap> mImages;
-	private ArrayList<Bitmap> mThumbs;
+
 	private WallpaperLoader mLoader;
 	private WallpaperDrawable mWallpaperDrawable = new WallpaperDrawable();
 
@@ -215,8 +214,7 @@ public class WallpaperChooserDialogFragment extends DialogFragment implements
 
 	private void findWallpapers() {
 		mImagesPath = new ArrayList<String>();
-		mImages = new ArrayList<Bitmap>();
-		mThumbs = new ArrayList<Bitmap>();
+
 		File walldir = new File("/system/wall");
 		if (walldir.exists()) {
 			File[] wallpath = walldir.listFiles();
@@ -224,14 +222,28 @@ public class WallpaperChooserDialogFragment extends DialogFragment implements
 				mImagesPath.add(wallpath[i].getPath());
 			}
 			Collections.sort(mImagesPath);
-			for (int i = 0; i < mImagesPath.size(); i++) {
-				String path = mImagesPath.get(i);
-				Bitmap image = BitmapFactory.decodeFile(path);
-				mImages.add(image);
-				mThumbs.add(createThumb(image));
-			}
 		}
 
+	}
+
+	private Bitmap getImage(int index) {
+		try {
+			String path = mImagesPath.get(index);
+			Bitmap image = BitmapFactory.decodeFile(path);
+			return image;
+		} catch (OutOfMemoryError e) {
+			return null;
+		}
+	}
+
+	private Bitmap getThumbImage(int index) {
+		try {
+			String path = mImagesPath.get(index);
+			Bitmap image = BitmapFactory.decodeFile(path);
+			return createThumb(image);
+		} catch (OutOfMemoryError e) {
+			return null;
+		}
 	}
 
 	private Bitmap createThumb(Bitmap map) {
@@ -281,7 +293,7 @@ public class WallpaperChooserDialogFragment extends DialogFragment implements
 			ImageView image = (ImageView) view
 					.findViewById(R.id.wallpaper_image);
 
-			Bitmap map = mThumbs.get(position);
+			Bitmap map = getThumbImage(position);
 			image.setImageBitmap(map);
 			Drawable thumbDrawable = image.getDrawable();
 			if (thumbDrawable != null) {
@@ -308,7 +320,7 @@ public class WallpaperChooserDialogFragment extends DialogFragment implements
 			if (isCancelled())
 				return null;
 			try {
-				return mImages.get(params[0]);
+				return getImage(params[0]);
 			} catch (OutOfMemoryError e) {
 				return null;
 			}
@@ -321,9 +333,9 @@ public class WallpaperChooserDialogFragment extends DialogFragment implements
 
 			if (!isCancelled() && !mOptions.mCancel) {
 				// Help the GC
-				if (mBitmap != null) {
-					mBitmap.recycle();
-				}
+				// if (mBitmap != null) {
+				// mBitmap.recycle();
+				// }
 
 				View v = getView();
 				if (v != null) {
@@ -335,9 +347,10 @@ public class WallpaperChooserDialogFragment extends DialogFragment implements
 					mWallpaperDrawable.setBitmap(null);
 				}
 				mLoader = null;
-			} else {
-				b.recycle();
 			}
+			// else {
+			// b.recycle();
+			// }
 		}
 
 		void cancel() {
